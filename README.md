@@ -2,7 +2,9 @@
 adds validateOn to ng-model-options to validate $viewValue without updating the $modelValue for easy roll backs
 
 #### Installation
+```
 angular.module('myApp', ['ngValidateOn'])
+```
 
 #### Example
 ```html
