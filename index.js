@@ -1,15 +1,25 @@
-angular.module('ngValidateOn', []).config(["$provide", function($provide) {
-  var DEFAULT_REGEXP;
-  DEFAULT_REGEXP = /(\s+|^)default(\s+|$)/;
-  $provide.decorator('ngModelDirective', ["$delegate", function($delegate) {
+angular.module('ngValidateOn', [])
+
+.config(function($provide) {
+  var DEFAULT_REGEXP = /(\s+|^)default(\s+|$)/;
+  
+  var trim = function(value) {
+    if (angular.isString(value)) {
+      return value.trim();
+    } else {
+      return value;
+    }
+  };
+  
+  $provide.decorator('ngModelDirective', function($delegate) {
     var compile, controller, ctrl, directive;
     directive = $delegate[0];
     compile = directive.compile;
     controller = directive.controller.pop();
+    
     ctrl = function($scope, $exceptionHandler, $attr, $element, $parse, $animate, $timeout, $rootScope, $q, $interpolate) {
-      var vm;
       controller.apply(this, arguments);
-      vm = this;
+      var vm = this;
       vm.$setViewValue = function(value, trigger) {
         vm.$viewValue = value;
         if (!vm.$options || vm.$options.validateOnDefault) {
@@ -20,58 +30,57 @@ angular.module('ngValidateOn', []).config(["$provide", function($provide) {
         }
       };
     };
+    
     directive.controller.push(ctrl);
+    
     directive.compile = function(tElement, tAttrs) {
-      var link, post, pre;
-      link = compile.apply(this, arguments);
-      post = function(scope, element, attrs, ctrls) {
-        var vm;
+      var link = compile.apply(this, arguments);
+    
+      var post = function(scope, element, attrs, ctrls) {
         link.post.apply(this, arguments);
-        vm = ctrls[0];
+        var vm = ctrls[0];
         if (vm.$options && vm.$options.validateOn) {
           element.on(vm.$options.validateOn, function(ev) {
             vm.$$runValidators(void 0, vm.$modelValue, vm.$viewValue, angular.noop);
           });
+          return;
         }
       };
-      pre = function(scope, element, attrs, ctrls) {
+      
+      var pre = function(scope, element, attrs, ctrls) {
         link.pre.apply(this, arguments);
       };
+      
       return {
         pre: pre,
-        post: post,
         post: post
       };
     };
     return $delegate;
-  }]);
-  return $provide.decorator('ngModelOptionsDirective', ["$delegate", function($delegate) {
-    var controller, ctrl, directive, trim;
-    directive = $delegate[0];
-    controller = directive.controller.pop();
-    trim = function(value) {
-      if (angular.isString(value)) {
-        return value.trim();
-      } else {
-        return value;
-      }
-    };
-    ctrl = function($scope, $attrs) {
+  });
+  
+  return $provide.decorator('ngModelOptionsDirective', function($delegate) {
+    var directive = $delegate[0];
+    var controller = directive.controller.pop();
+    
+    var ctrl = function($scope, $attrs) {
       controller.apply(this, arguments);
-      this.$options = angular.copy($scope.$eval($attrs.ngModelOptions));
-      if (angular.isDefined(this.$options.validateOn)) {
-        this.$options.validateOnDefault = false;
-        this.$options.validateOn = trim(this.$options.validateOn.replace(DEFAULT_REGEXP, (function(_this) {
-          return function() {
-            _this.$options.validateOnDefault = true;
-            return ' ';
-          };
-        })(this)));
+      var vm = this;
+      vm.$options = angular.copy($scope.$eval($attrs.ngModelOptions));
+    
+      if (angular.isDefined(vm.$options.validateOn)) {
+        vm.$options.validateOnDefault = false;
+        vm.$options.validateOn = trim(vm.$options.validateOn.replace(DEFAULT_REGEXP, function() {
+          vm.$options.validateOnDefault = true;
+          return ' ';
+        }));
       } else {
-        this.$options.validateOnDefault = true;
+        vm.$options.validateOnDefault = true;
       }
     };
+    
     directive.controller.push(ctrl);
+    
     return $delegate;
-  }]);
-}]);
+  });
+});
