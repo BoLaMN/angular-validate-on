@@ -3,6 +3,9 @@ angular.module 'ngValidateOn', []
 .config ($provide) ->
   DEFAULT_REGEXP = /(\s+|^)default(\s+|$)/
 
+  trim = (value) ->
+    if angular.isString(value) then value.trim() else value
+
   $provide.decorator 'ngModelDirective', ($delegate) ->
     directive = $delegate[0]
 
@@ -24,7 +27,6 @@ angular.module 'ngValidateOn', []
           vm.$$debounceViewValueCommit trigger
 
         return
-
       return
 
     directive.controller.push ctrl
@@ -42,6 +44,7 @@ angular.module 'ngValidateOn', []
             vm.$$runValidators undefined, vm.$modelValue, vm.$viewValue, angular.noop
             return
 
+          return
         return
 
       pre = (scope, element, attrs, ctrls) ->
@@ -49,10 +52,7 @@ angular.module 'ngValidateOn', []
 
         return
 
-      {
-        pre: pre, post: post
-        post
-      }
+      { pre: pre, post: post }
 
     $delegate
 
@@ -61,22 +61,21 @@ angular.module 'ngValidateOn', []
 
     controller = directive.controller.pop()
 
-    trim = (value) ->
-      if angular.isString(value) then value.trim() else value
-
     ctrl = ($scope, $attrs) ->
       controller.apply this, arguments
 
-      @$options = angular.copy $scope.$eval($attrs.ngModelOptions)
+      vm = this
 
-      if angular.isDefined @$options.validateOn
-        @$options.validateOnDefault = false
+      vm.$options = angular.copy $scope.$eval($attrs.ngModelOptions)
 
-        @$options.validateOn = trim @$options.validateOn.replace DEFAULT_REGEXP, =>
-          @$options.validateOnDefault = true
+      if angular.isDefined vm.$options.validateOn
+        vm.$options.validateOnDefault = false
+
+        vm.$options.validateOn = trim vm.$options.validateOn.replace DEFAULT_REGEXP, ->
+          vm.$options.validateOnDefault = true
           ' '
       else
-        @$options.validateOnDefault = true
+        vm.$options.validateOnDefault = true
 
       return
 
