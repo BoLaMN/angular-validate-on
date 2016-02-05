@@ -1,6 +1,10 @@
 # angular-validate-on
-adds validateOn to ng-model-options 
+adds validateOn to ng-model-options to validate $viewValue without updating the $modelValue for easy roll backs
 
+#### Installation
+angular.module('myApp', ['ngValidateOn'])
+
+#### Example
 ```html
 <div>
   <form name="myForm"
